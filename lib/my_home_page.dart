@@ -1,5 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'concerning_to_list/button_add.dart';
+import 'concerning_to_list/list_todo.dart';
 
 class MyHomePage extends StatefulWidget {
   @override
@@ -50,10 +52,10 @@ class _MyHomePageState extends State<MyHomePage> {
                         itemCount: snapshot.data.docs.length,
                         shrinkWrap: true,
                         itemBuilder: (context, index) {
+                          var todoList = snapshot.data.docs[index];
                           TextEditingController todoUpdate =
                               TextEditingController(
-                                  text: snapshot.data.docs[index]
-                                      .data()['title']);
+                                  text: todoList.data()['title']);
                           return Dismissible(
                             direction: DismissDirection.horizontal,
                             key: UniqueKey(),
@@ -64,80 +66,13 @@ class _MyHomePageState extends State<MyHomePage> {
                               color: Colors.red,
                             ),
                             onDismissed: (direction) {
-                              todoCollection
-                                  .doc(snapshot.data.docs[index].id)
-                                  .delete();
+                              todoCollection.doc(todoList.id).delete();
                             },
-                            child: ListTile(
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (BuildContext context) {
-                                    return SimpleDialog(
-                                      backgroundColor: Colors.white,
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius:
-                                              BorderRadius.circular(20)),
-                                      title: Row(
-                                        children: [
-                                          Text('Update Todo'),
-                                          Spacer(),
-                                          IconButton(
-                                            icon: Icon(Icons.cancel),
-                                            onPressed: () {
-                                              Navigator.pop(context);
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                      children: [
-                                        Divider(),
-                                        Padding(
-                                          padding: EdgeInsets.all(10),
-                                          child: TextFormField(
-                                            controller: todoUpdate,enableSuggestions: true,
-                                            autofocus: true,
-                                            decoration: InputDecoration(
-                                                hintText: "eg. Work Out"),
-                                          ),
-                                        ),
-                                        Padding(
-                                          padding: EdgeInsets.all(10),
-                                          child: ElevatedButton(
-                                              style: ButtonStyle(
-                                                shape: MaterialStateProperty
-                                                    .all<OutlinedBorder>(
-                                                  RoundedRectangleBorder(
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                            18.0),
-                                                    side: BorderSide(
-                                                        color: Colors.blue),
-                                                  ),
-                                                ),
-                                              ),
-                                              onPressed: () {
-                                                todoCollection
-                                                    .doc(snapshot
-                                                        .data.docs[index].id)
-                                                    .update(
-                                                  {'title': todoUpdate.text},
-                                                );
-                                                todoMessage.clear();
-                                                Navigator.pop(context);
-                                              },
-                                              child: Text('Update')),
-                                        )
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              title: Text(
-                                '${snapshot.data.docs[index].data()['title']}',
-                                style: TextStyle(color: Colors.white),
-                              ),
-                            ),
+                            child: ListTodo(
+                                todoList: todoList,
+                                todoUpdate: todoUpdate,
+                                todoCollection: todoCollection,
+                                todoMessage: todoMessage),
                           );
                         },
                       );
@@ -178,33 +113,15 @@ class _MyHomePageState extends State<MyHomePage> {
                 children: [
                   Divider(),
                   Padding(
-                    padding: EdgeInsets.all(10),
+                    padding: EdgeInsets.all(20),
                     child: TextFormField(
                       controller: todoMessage,
                       autofocus: true,
                       decoration: InputDecoration(hintText: "eg. Work Out"),
                     ),
                   ),
-                  Padding(
-                    padding: EdgeInsets.all(10),
-                    child: ElevatedButton(
-                        style: ButtonStyle(
-                          shape: MaterialStateProperty.all<OutlinedBorder>(
-                            RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(18.0),
-                              side: BorderSide(color: Colors.blue),
-                            ),
-                          ),
-                        ),
-                        onPressed: () {
-                          todoCollection.add(
-                            {'title': todoMessage.text},
-                          );
-                          todoMessage.clear();
-                          Navigator.pop(context);
-                        },
-                        child: Text('Add')),
-                  )
+                  ButtonAdd(
+                      todoCollection: todoCollection, todoMessage: todoMessage),
                 ],
               );
             },

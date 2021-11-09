@@ -3,12 +3,8 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:todos_firebase/services/todo_service.dart';
 
-Future<dynamic> showTodoDialog({
-  required BuildContext context,
-  required String type,
-  QueryDocumentSnapshot? todoList,
-}) {
-  TodoService todoService = new TodoService();
+Future<dynamic> showTodoDialog(BuildContext context,
+    [QueryDocumentSnapshot? todoList]) {
   TextEditingController todoUpdateInput = new TextEditingController(
       text: todoList != null ? todoList.data()['title'] : '');
   return showDialog(
@@ -19,7 +15,7 @@ Future<dynamic> showTodoDialog({
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Text('$type Todo'),
+            Text(todoList != null ? 'Update Todo' : 'Create Todo'),
             Spacer(),
             IconButton(
               icon: Icon(Icons.cancel),
@@ -36,7 +32,8 @@ Future<dynamic> showTodoDialog({
             child: TextFormField(
               controller: todoUpdateInput,
               enableSuggestions: true,
-              autofocus: true,
+              //cause populate twice
+              // autofocus: true,
               decoration: InputDecoration(hintText: "eg. Work Out"),
             ),
           ),
@@ -52,15 +49,17 @@ Future<dynamic> showTodoDialog({
                 ),
               ),
               onPressed: () async {
-                if (type == "Update") {
-                  await todoService.updateTodo(
-                      id: todoList!.id, value: todoUpdateInput.text);
+                if (todoList != null) {
+                  await TodoService.updateTodo(
+                    todoList.id,
+                    todoUpdateInput.text,
+                  );
                 } else {
-                  await todoService.createTodo(value: todoUpdateInput.text);
+                  await TodoService.createTodo(todoUpdateInput.text);
                 }
                 Navigator.pop(context);
               },
-              child: Text(type),
+              child: Text(todoList != null ? "Update" : "Create"),
             ),
           ),
         ],

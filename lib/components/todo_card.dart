@@ -13,13 +13,20 @@ class ListTodo extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListTile(
       title: Text(
-        "${todoList.data()['title']}",
+        "${todoList.data()['title'] ?? 'No data'}",
         style: TextStyle(color: Colors.white, fontSize: 30),
       ),
       tileColor: Colors.blue,
-      trailing: Icon(Icons.arrow_left_outlined, size: 40, color: Colors.white,),
+      trailing: Icon(
+        Icons.arrow_left_outlined,
+        size: 40,
+        color: Colors.white,
+      ),
       onTap: () {
-        showTodoDialog(context: context, todoList: todoList, type: "Update");
+        showTodoDialog(
+          context,
+          todoList,
+        );
       },
     );
   }

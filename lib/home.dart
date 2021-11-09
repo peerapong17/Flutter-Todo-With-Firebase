@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:todos_firebase/components/present_alert.dart';
 import 'package:todos_firebase/components/show_todo_dialog.dart';
 import 'package:todos_firebase/services/todo_service.dart';
 
@@ -11,9 +12,15 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  TextEditingController todoMessage = TextEditingController();
-  TextEditingController todoAddMessage = TextEditingController();
-  TodoService todoService = new TodoService();
+  @override
+  initState() {
+    print("initState run");
+  }
+
+  @override
+  didChangeDependencies() {
+    print("didChangeDependencies run");
+  }
 
   Future<Null> refreshList() async {
     await Future.delayed(
@@ -23,13 +30,12 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
+    print("build method run");
     return Scaffold(
       backgroundColor: Colors.grey,
       floatingActionButton: FloatingActionButton(
         child: Icon(Icons.add),
-        onPressed: () {
-          showTodoDialog(context: context, type: "Add");
-        },
+        onPressed: () => showTodoDialog(context),
       ),
       body: SingleChildScrollView(
         child: RefreshIndicator(
@@ -54,38 +60,48 @@ class _HomeState extends State<Home> {
                       .collection("todos")
                       .snapshots(),
                   builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
+                    print("snaptshot change");
+                    if (snapshot.hasData) {
+                      return ListView.builder(
+                        itemCount: snapshot.data!.docs.length,
+                        shrinkWrap: true,
+                        itemBuilder: (context, index) {
+                          QueryDocumentSnapshot todoList =
+                              snapshot.data!.docs[index];
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 10),
+                            child: Dismissible(
+                              direction: DismissDirection.horizontal,
+                              key: UniqueKey(),
+                              background: Container(
+                                padding: EdgeInsets.only(left: 20),
+                                alignment: Alignment.centerLeft,
+                                child: Icon(Icons.delete),
+                                color: Colors.red,
+                              ),
+                              onDismissed: (direction) {
+                                TodoService.deleteTodo(todoList.id);
+                              },
+                              confirmDismiss: (direction) async {
+                                final value = await presentDialog(context);
+                                if (value == "true") {
+                                  return true;
+                                } else {
+                                  return false;
+                                }
+                              },
+                              child: ListTodo(todoList: todoList),
+                            ),
+                          );
+                        },
+                      );
+                    } else if (snapshot.hasError) {
+                      return Text("There was an error");
+                    } else {
                       return Center(
                         child: CircularProgressIndicator(),
                       );
                     }
-                    return ListView.builder(
-                      itemCount: snapshot.data!.docs.length,
-                      shrinkWrap: true,
-                      itemBuilder: (context, index) {
-                        QueryDocumentSnapshot todoList =
-                            snapshot.data!.docs[index];
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 10),
-                          child: Dismissible(
-                            direction: DismissDirection.horizontal,
-                            key: UniqueKey(),
-                            background: Container(
-                              padding: EdgeInsets.only(left: 20),
-                              alignment: Alignment.centerLeft,
-                              child: Icon(Icons.delete),
-                              color: Colors.red,
-                            ),
-                            onDismissed: (direction) {
-                              todoService.todoCollection
-                                  .doc(todoList.id)
-                                  .delete();
-                            },
-                            child: ListTodo(todoList: todoList),
-                          ),
-                        );
-                      },
-                    );
                   },
                 ),
               ],
